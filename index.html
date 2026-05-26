@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Trimmer — Split by Silence</title>
+  <meta name="description" content="Upload an audio file, automatically detect silence, adjust trim points, and download individual speech segments.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="url(#logo-grad)"/>
+          <path d="M10 20V12M14 22V10M18 18V14M22 20V12M26 16V16" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          <defs><linearGradient id="logo-grad" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#2dd4bf"/></linearGradient></defs>
+        </svg>
+        <h1>Audio Trimmer</h1>
+      </div>
+      <p class="tagline">Split audio by silence • Adjust trims • Download segments</p>
+    </header>
+
+    <!-- Upload Area -->
+    <section id="upload-section" class="upload-section">
+      <div id="drop-zone" class="drop-zone">
+        <div class="drop-zone-content">
+          <svg class="upload-icon" width="56" height="56" viewBox="0 0 56 56" fill="none">
+            <circle cx="28" cy="28" r="27" stroke="url(#up-grad)" stroke-width="2" stroke-dasharray="6 4"/>
+            <path d="M28 36V20M28 20L22 26M28 20L34 26" stroke="url(#up-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs><linearGradient id="up-grad" x1="0" y1="0" x2="56" y2="56"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#2dd4bf"/></linearGradient></defs>
+          </svg>
+          <p class="drop-text">Drop your audio file here</p>
+          <p class="drop-subtext">or click to browse — MP3, WAV, OGG, FLAC, M4A</p>
+        </div>
+        <input type="file" id="file-input" accept="audio/*" hidden>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <section id="loading-section" class="loading-section hidden">
+      <div class="loader-wrapper">
+        <div class="loader-ring"></div>
+        <p id="loading-text" class="loading-text">Decoding audio…</p>
+      </div>
+    </section>
+
+    <!-- Editor -->
+    <section id="editor-section" class="editor-section hidden">
+      <!-- File info bar -->
+      <div class="file-info-bar">
+        <span id="file-name" class="file-name">audio.mp3</span>
+        <span id="file-duration" class="file-duration">0:00</span>
+        <button id="btn-change-file" class="btn-ghost" title="Load different file">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.5 6.5V4a1 1 0 00-1-1H3.5a1 1 0 00-1 1v8a1 1 0 001 1h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 10l2-2m0 0l2 2m-2-2v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Change file
+        </button>
+      </div>
+
+      <!-- Settings Panel -->
+      <div class="settings-panel">
+        <h2 class="settings-title">Silence Detection</h2>
+        <div class="settings-grid">
+          <div class="setting-item">
+            <label for="silence-threshold">Threshold (dB)</label>
+            <div class="setting-control">
+              <button type="button" id="threshold-minus" class="btn-stepper" title="−1 dB">−</button>
+              <input type="range" id="silence-threshold" min="-80" max="-10" value="-30" step="1">
+              <button type="button" id="threshold-plus" class="btn-stepper" title="+1 dB">+</button>
+              <span id="silence-threshold-val" class="setting-value">-30 dB</span>
+            </div>
+          </div>
+          <div class="setting-item">
+            <label for="min-silence-duration">Min Silence Duration (ms)</label>
+            <div class="setting-control">
+              <input type="range" id="min-silence-duration" min="100" max="3000" value="100" step="50">
+              <span id="min-silence-duration-val" class="setting-value">100 ms</span>
+            </div>
+          </div>
+          <div class="setting-item">
+            <label for="padding">Padding (ms)</label>
+            <div class="setting-control">
+              <input type="range" id="padding" min="0" max="500" value="150" step="10">
+              <span id="padding-val" class="setting-value">150 ms</span>
+            </div>
+          </div>
+        </div>
+        <button id="btn-detect" class="btn-primary">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 9h2l2-4 3 8 2-6 2 4h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Detect Silence
+        </button>
+      </div>
+
+      <!-- Waveform + Transport -->
+      <div class="waveform-container">
+        <div class="waveform-wrapper" id="waveform-wrapper">
+          <canvas id="waveform-canvas"></canvas>
+          <canvas id="overlay-canvas"></canvas>
+          <div id="playhead" class="playhead"></div>
+        </div>
+        <div class="time-ruler" id="time-ruler"></div>
+      </div>
+
+      <div class="transport-bar">
+        <button id="btn-play" class="btn-transport" title="Play / Pause">
+          <svg id="icon-play" width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M6 4l14 7-14 7V4z" fill="currentColor"/>
+          </svg>
+          <svg id="icon-pause" width="22" height="22" viewBox="0 0 22 22" fill="none" class="hidden">
+            <rect x="5" y="4" width="4" height="14" rx="1" fill="currentColor"/>
+            <rect x="13" y="4" width="4" height="14" rx="1" fill="currentColor"/>
+          </svg>
+        </button>
+        <button id="btn-stop" class="btn-transport" title="Stop">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="5" y="5" width="12" height="12" rx="2" fill="currentColor"/></svg>
+        </button>
+        <span id="current-time" class="time-display">0:00.0</span>
+        <span class="time-sep">/</span>
+        <span id="total-time" class="time-display">0:00.0</span>
+        <div class="speed-control">
+          <label for="playback-speed" class="speed-label">Speed</label>
+          <select id="playback-speed" class="speed-select">
+            <option value="0.25">0.25×</option>
+            <option value="0.5">0.5×</option>
+            <option value="0.75">0.75×</option>
+            <option value="1" selected>1×</option>
+            <option value="1.25">1.25×</option>
+            <option value="1.5">1.5×</option>
+            <option value="2">2×</option>
+            <option value="3">3×</option>
+          </select>
+        </div>
+        <div class="transport-spacer"></div>
+        <button id="btn-zoom-in" class="btn-transport" title="Zoom In">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M12 12l4 4M8 6v4M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <button id="btn-zoom-out" class="btn-transport" title="Zoom Out">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M12 12l4 4M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <button id="btn-zoom-fit" class="btn-transport" title="Fit to View">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 6V3a1 1 0 011-1h3M12 2h3a1 1 0 011 1v3M16 12v3a1 1 0 01-1 1h-3M6 16H3a1 1 0 01-1-1v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <!-- Segments List -->
+      <div id="segments-panel" class="segments-panel hidden">
+        <div class="segments-header">
+          <h2 class="segments-title">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 5h12M4 10h12M4 15h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Segments
+            <span id="segment-count" class="segment-count">0</span>
+          </h2>
+          <div class="segments-actions">
+            <button id="btn-play-all" class="btn-secondary" title="Preview all segments sequentially">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 5-10 5V3z" fill="currentColor"/></svg>
+              Play All
+            </button>
+            <button id="btn-download-all" class="btn-primary" title="Download all segments">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 12v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Download All
+            </button>
+          </div>
+        </div>
+        <div class="prefix-bar">
+          <label for="filename-prefix" class="prefix-label">Filename Prefix</label>
+          <div class="prefix-input-wrapper">
+            <input type="text" id="filename-prefix" class="prefix-input" placeholder="e.g. Interview_01_" spellcheck="false">
+            <span class="prefix-preview" id="prefix-preview">Preview: <span id="prefix-preview-text">Segment 1.mp3</span></span>
+          </div>
+        </div>
+        <ul id="segments-list" class="segments-list"></ul>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
