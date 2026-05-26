@@ -409,7 +409,6 @@
       const li = document.createElement('li');
       li.className = 'segment-card';
       li.id = `segment-card-${idx}`;
-      li.style.animationDelay = `${idx * 0.05}s`;
 
       const dur = seg.end - seg.start;
 
@@ -433,8 +432,11 @@
           <button class="btn-icon" title="Download this segment" data-action="download" data-idx="${idx}">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v9m0 0l-3-3m3 3l3-3M3 13v1.5A1.5 1.5 0 004.5 16h9a1.5 1.5 0 001.5-1.5V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <button class="btn-danger-icon" title="Delete this segment" data-action="delete" data-idx="${idx}">
+          <button class="btn-danger-icon" title="Delete and shift names" data-action="delete" data-idx="${idx}">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <button class="btn-danger-icon" title="Delete without shifting names" data-action="trash" data-idx="${idx}">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
       `;
@@ -885,6 +887,11 @@
       reapplyBatchNames();
       refreshAfterEdit();
       showToast(`Deleted segment ${idx + 1}`);
+    }
+    else if (action === 'trash') {
+      segments.splice(idx, 1);
+      refreshAfterEdit();
+      showToast(`Removed segment ${idx + 1}`);
     }
   });
 

@@ -620,7 +620,6 @@ input[type="range"]::-moz-range-thumb {
 
 /* ===== Segments Panel ===== */
 .segments-panel {
-  animation: fadeUp 0.4s ease both;
 }
 
 .segments-header {
@@ -776,7 +775,6 @@ input[type="range"]::-moz-range-thumb {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  animation: fadeUp 0.3s ease both;
 }
 
 .segment-card:hover {
