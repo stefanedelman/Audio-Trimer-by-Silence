@@ -722,6 +722,42 @@ input[type="range"]::-moz-range-thumb {
   font-weight: 600;
 }
 
+.batch-names-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+}
+
+.batch-names-input {
+  flex: 1;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+
+.batch-names-input:focus {
+  border-color: var(--accent-violet);
+}
+
+.batch-names-bar .btn-secondary {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 .segments-list {
   list-style: none;
   display: flex;

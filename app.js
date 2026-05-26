@@ -2,6 +2,9 @@
 (function () {
   'use strict';
 
+  // ── Config ───────────────────────────────────────────────────────────────────
+  const FILENAME_PREFIX = 'Female_IDA_Word_';
+
   // ── State ────────────────────────────────────────────────────────────────────
   let audioContext = null;
   let audioBuffer = null;
@@ -60,6 +63,9 @@
   const btnDownloadAll  = $('#btn-download-all');
   const prefixInput     = $('#filename-prefix');
   const prefixPreview   = $('#prefix-preview-text');
+  const batchNamesInput = $('#batch-names');
+  const btnApplyNames   = $('#btn-apply-names');
+  let batchWords = [];  // parsed words from batch names textarea
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
   function formatTime(sec) {
@@ -477,6 +483,34 @@
     renderSegments();
   }
 
+  // ── Batch Names ──────────────────────────────────────────────────────────────
+  function parseBatchNames() {
+    batchWords = batchNamesInput.value
+      .split('.')
+      .map(w => w.trim())
+      .filter(w => w.length > 0);
+  }
+
+  function applyBatchNames() {
+    parseBatchNames();
+    segments.forEach((seg, idx) => {
+      if (idx < batchWords.length) {
+        seg.name = batchWords[idx];
+      }
+    });
+    renderSegments();
+    showToast(`Applied ${Math.min(batchWords.length, segments.length)} name${Math.min(batchWords.length, segments.length) !== 1 ? 's' : ''}`);
+  }
+
+  function reapplyBatchNames() {
+    if (batchWords.length === 0) return;
+    segments.forEach((seg, idx) => {
+      if (idx < batchWords.length) {
+        seg.name = batchWords[idx];
+      }
+    });
+  }
+
   // ── Trim Handles on Waveform ─────────────────────────────────────────────────
   function renderTrimHandles() {
     // Remove old handles
@@ -799,6 +833,9 @@
     paddingVal.textContent = paddingInput.value + ' ms';
   });
 
+  // Initialize prefix input from hardcoded default
+  prefixInput.value = FILENAME_PREFIX;
+
   // Prefix preview
   function updatePrefixPreview() {
     const prefix = prefixInput.value.trim();
@@ -819,6 +856,10 @@
     playhead.style.left = '0px';
     currentTimeEl.textContent = '0:00.0';
   });
+
+  // Batch names
+  btnApplyNames.addEventListener('click', applyBatchNames);
+  btnDownloadAll.addEventListener('click', downloadAllSegments);
 
   // Zoom
   btnZoomIn.addEventListener('click', () => zoom(1.5));
@@ -843,6 +884,12 @@
     else if (action === 'download') downloadSegment(idx);
     else if (action === 'delete') {
       segments.splice(idx, 1);
+      // Shift batch names: remove the used word so remaining segments get next names
+      if (batchWords.length > 0 && idx < batchWords.length) {
+        batchWords.splice(idx, 1);
+        batchNamesInput.value = batchWords.join('.');
+      }
+      reapplyBatchNames();
       refreshAfterEdit();
       showToast(`Deleted segment ${idx + 1}`);
     }
