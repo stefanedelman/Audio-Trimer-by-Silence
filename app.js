@@ -505,9 +505,7 @@
   function reapplyBatchNames() {
     if (batchWords.length === 0) return;
     segments.forEach((seg, idx) => {
-      if (idx < batchWords.length) {
-        seg.name = batchWords[idx];
-      }
+      seg.name = idx < batchWords.length ? batchWords[idx] : '';
     });
   }
 
@@ -884,11 +882,6 @@
     else if (action === 'download') downloadSegment(idx);
     else if (action === 'delete') {
       segments.splice(idx, 1);
-      // Shift batch names: remove the used word so remaining segments get next names
-      if (batchWords.length > 0 && idx < batchWords.length) {
-        batchWords.splice(idx, 1);
-        batchNamesInput.value = batchWords.join('.');
-      }
       reapplyBatchNames();
       refreshAfterEdit();
       showToast(`Deleted segment ${idx + 1}`);
